@@ -1,0 +1,19 @@
+#!/bin/bash
+#default passwd unixlab
+passcode='$6$rDaaQyPl$UDP1Y4Rx7xxoe9ilO6TVPytXusehVBrPiNHHbhDX.zfqVl8x0yrIHRBP76fdoAV/aLTzD9dnkpsl2HaJEiQID1'
+echo -e "Student Full Name       :\c"
+read fullname
+echo -e "Student Email ID        :\c"
+read em
+echo -e "Login name              :\c"
+read login
+echo -e "Course Code (S/R6/R7)     :\c"
+read course
+echo -e "Login Validity in months:\c"
+read duration
+ST=`date +%s` ; ET=`date -d "$duration months" +%s`
+useradd -m -d /home/$login -p $passcode -c "$ST-$fullname-$em-$course-${duration}months-$ET"  -s /bin/bash $login
+echo "$ST-$fullname-$em-$course-${duration}months-$ET" > /home/$login/.id
+ln -s /home/requests/classtools/startlab /home/$login/requestlab
+chmod 444 /home/$login/.id
+echo "Access Details - loginname: $login password unixlab"

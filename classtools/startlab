@@ -1,0 +1,75 @@
+#!/bin/bash
+
+MAXVMS=12
+TOTALNODES=2
+MAXVMPERNODE=6
+nodes="cn1 cn2"
+activecache="/home/requests/cache"
+labnotes="/home/requests/labnotes"
+user=`groups`
+activeuserrequests=`ls -l $activecache/*$user* 2> /dev/null |wc -l`
+
+ST=`cat ~/.id|awk -F'-' '{print $1}'`
+ET=`cat ~/.id|awk -F'-' '{print $6}'`
+CT=`date +%s`
+CC=`cat ~/.id|awk -F'-' '{print $4}'`
+SOL10=0;RHEL6=0;RHEL7=0;UBUNTU=0
+totalactivevms=`ls -l $activecache/*active* 2> /dev/null |wc -l`
+
+if [ ${activeuserrequests} -gt 0 ]; then
+	echo "Sorry, You are already having an active lab request"
+#	echo "Do you want to close current lab and create new VMS?[y/n]"
+#	read ans
+#	if [[ $ans == y ]]; then
+#	
+	exit 1
+fi
+
+if [ ${totalactivevms} -ge $MAXVMS ]; then
+	echo "Sorry, Lab is Busy now.. Please try in one hour"
+	exit 1
+fi
+for cn in $nodes; do
+	if [ `ls -l $activecache/*${cn}.active*  2> /dev/null|wc -l` -lt $MAXVMPERNODE ]; then
+	targetcn="gurkul-${cn}";break
+fi
+done
+
+
+echo  -e  "\t\t Virtual LAB Info \t\t\n-----------------------------------------" >  ~/.${user}
+if `echo $CC|grep S > /dev/null`; then
+    SOL10=1  ; cat $labnotes/S10LABS >> ~/.${user}
+fi
+if `echo $CC|grep R6 > /dev/null`; then
+    RHEL6=1 ; cat $labnotes/R6LABS   >> ~/.${user}
+fi
+if `echo $CC|grep R7 > /dev/null`; then
+    RHEL7=1 ; cat $labnotes/R7LABS    >> ~/.${user}
+fi
+
+if [ $SOL10 -eq 0 ] && [ $RHEL6 -eq 0 ] && [ $RHEL7 -eq 0 ];then
+    echo "Sorry : You have no valid Course Subscription.Please contact admin" 
+fi
+cat ~/.${user}
+echo ; echo;echo
+echo -e "Enter the LAB CODE:\c"
+read LABCODE
+
+if `echo $LABCODE|grep SOL > /dev/null` && [ $SOL10 -eq 1 ] && [ $ET -ge `date +%s` ]; then
+    touch $activecache/$CT.$LABCODE.$user.$targetcn.active.request
+    echo " your Request ( id = $CT )is Successful !! Please wait few minutes to get your Lab ready"
+    echo " you will get a mail in your inbox with the lab access details"
+elif `echo $LABCODE|grep RHEL6 > /dev/null` && [ $RHEL6 -eq 1 ] && [ $ET -ge `date +%s` ]; then
+    touch $activecache/$CT.$LABCODE.$user.$targetcn.active.request
+    echo " your Request ( id = $CT )is Successful !! Please wait few minutes to get your Lab ready"
+    echo " you will get a mail in your inbox with the lab access details"
+elif `echo $LABCODE|grep RHEL7 > /dev/null` && [ $RHEL7 -eq 1 ] && [ $ET -ge `date +%s` ]; then
+    touch $activecache/$CT.$LABCODE.$user.$targetcn.active.request
+    echo " your Request ( id = $CT )is Successful !! Please wait few minutes to get your Lab ready"
+    echo " you will get a mail in your inbox with the lab access details"
+else 
+    echo "Sorry :  The Your requested LAB is unavailable"
+fi
+
+
+	
